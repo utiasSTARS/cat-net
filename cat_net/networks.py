@@ -36,7 +36,7 @@ class UNet(nn.Module):
         # Final convolution
         self.model.add_module('norm0',
                               nn.InstanceNorm2d(total_features, affine=True))
-        self.model.add_module('relu0', nn.LeakyReLU(0.2, inplace=True))
+        self.model.add_module('relu0', nn.ReLU(inplace=True))
         self.model.add_module('conv1',
                               nn.ConvTranspose2d(total_features,
                                                  output_channels,
