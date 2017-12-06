@@ -7,8 +7,8 @@ from cat_net import experiment
 
 ### CONFIGURATION ###
 ### (defaults in __init__.py) ###
-config.data_dir = '/media/m2-drive/datasets/ethl_dataset/raw'
-config.results_dir = '/media/raid5-array/experiments/cat-net/ethl_dataset'
+config.data_dir = '/home/leeclement/datasets/ethl_dataset/raw'
+config.results_dir = '/home/leeclement/experiments/cat-net/ethl_dataset'
 
 config.experiment_name = 'ethl-demo'
 
