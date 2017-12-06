@@ -45,7 +45,7 @@ class Config:
         self.plot_interval = 20  # batches
         self.save_interval = 5  # epochs
 
-        self.visdom_port = 8098
+        self.visdom_port = 8097
 
     def save_txt(self):
         save_dir = os.path.join(self.results_dir, self.experiment_name)
