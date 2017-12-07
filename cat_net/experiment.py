@@ -14,12 +14,12 @@ def train(model, train_data, val_data, resume_from_epoch=None):
                               batch_size=config.batch_size,
                               shuffle=True,
                               num_workers=config.dataloader_workers,
-                              pin_memory=True)
+                              pin_memory=config.use_cuda)
     val_loader = DataLoader(val_data,
                             batch_size=config.batch_size,
                             shuffle=False,
                             num_workers=config.dataloader_workers,
-                            pin_memory=True)
+                            pin_memory=config.use_cuda)
 
     print('Training images: {}'.format(len(train_data)))
     print('Validation images: {}'.format(len(val_data)))
@@ -126,7 +126,7 @@ def test(model, test_data, which_epoch='best', label=None):
                              batch_size=1,
                              shuffle=False,
                              num_workers=config.dataloader_workers,
-                             pin_memory=True)
+                             pin_memory=config.use_cuda)
 
     model.load_checkpoint(which_epoch)
     model.set_mode('eval')

@@ -16,10 +16,6 @@ config.use_cuda = True
 config.down_levels = 7
 config.innermost_kernel_size = (3, 4)
 
-# Image mean and stdev used by Isola et al. (2014)
-# Comment out to use default ImageNet values
-config.image_mean = [0.5, 0.5, 0.5]
-config.image_std = [0.5, 0.5, 0.5]
 
 print(config)
 config.save_txt()

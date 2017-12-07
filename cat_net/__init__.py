@@ -38,9 +38,10 @@ class Config:
         self.image_final_size = (192, 256)  # H, W
         self.random_crop = True  # if True, crops load_size to final_size, else scales
 
-        # mean and std for normalizing images (from ImageNet)
-        self.image_mean = [0.485, 0.456, 0.406]
-        self.image_std = [0.229, 0.224, 0.225]
+        # mean and std for normalizing images
+        # used by Isola et al. (2014) to play nice with final tanh layer
+        self.image_mean = [0.5, 0.5, 0.5]
+        self.image_std = [0.5, 0.5, 0.5]
 
         self.plot_interval = 20  # batches
         self.save_interval = 5  # epochs
