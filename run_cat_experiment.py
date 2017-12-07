@@ -7,7 +7,7 @@ from cat_net import experiment
 
 ### CONFIGURATION ###
 ### (defaults in __init__.py) ###
-config.data_dir = '/home/leeclement/datasets/ethl_dataset/raw'
+config.data_dir = '/home/leeclement/datasets/ethl_dataset'
 config.results_dir = '/home/leeclement/experiments/cat-net/ethl_dataset'
 
 config.experiment_name = 'ethl-demo'

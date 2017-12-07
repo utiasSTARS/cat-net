@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from PIL import Image
 
 import torch
 from torch import nn
@@ -32,13 +33,12 @@ def initialize_weights(module):
 
 
 def image_from_tensor(tensor):
-    transform = transforms.Compose([
-        custom_transforms.UnNormalize(config.image_mean, config.image_std),
-        custom_transforms.Clamp(0, 1),
-        transforms.ToPILImage()  # multiplication by 255 happens here
-    ])
+    """Scales a CxHxW tensor with values in the range [-1, 1] to [0, 255]"""
+    image = tensor.cpu()
+    image = 0.5 * image + 0.5  # [-1, 1] --> [0, 1]
+    image = transforms.ToPILImage()(image)  # [0, 1] --> [0, 255]
 
-    return transform(tensor.cpu())
+    return image
 
 
 def concatenate_dicts(*dicts):
