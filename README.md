@@ -2,9 +2,9 @@
 
 <img src="https://raw.githubusercontent.com/utiasSTARS/cat-net/master/pipeline.png" width="300px"/>
 
-Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance Transformations for Robust Direct Visual Localization Under Illumination Change"](https://arxiv.org/abs/1709.03009).
+Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance Transformations for Direct Visual Localization Under Illumination Change"](https://arxiv.org/abs/1709.03009).
 
-Dependencies: 
+## Dependencies
 - numpy
 - pytorch + torchvision (0.3.0)
 - PIL
@@ -17,13 +17,17 @@ Dependencies:
 4. In another terminal run `python3 run_cat_experiment.py` to start training.
 5. Tune in to `localhost:8097` and watch the fun.
 
+## Pre-trained models
+Coming soon!
+
 ## Citation
 If you use this code in your research, please cite:
 ```
 @article{2018_Clement_Learning,
   author = {Lee Clement and Jonathan Kelly},
+  journal = {{IEEE} Robotics and Automation Letters},
   link = {https://arxiv.org/abs/1709.03009},
-  title = {How to Train a {CAT}: Learning Canonical Appearance Transformations for Robust Direct Localization Under Illumination Change},
+  title = {How to Train a {CAT}: Learning Canonical Appearance Transformations for Direct Visual Localization Under Illumination Change},
   year = {2018}
 }
 ```
