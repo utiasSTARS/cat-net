@@ -22,7 +22,7 @@ class Config:
         self.train_epochs = 100
         self.lr = 1e-4
 
-        self.batch_size = 16
+        self.batch_size = 64
         self.source_channels = 3
         self.output_channels = 3
         self.num_init_features = 64

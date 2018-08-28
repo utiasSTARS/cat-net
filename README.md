@@ -9,6 +9,7 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 - pytorch + torchvision (0.3.0)
 - PIL
 - visdom
+- [pyslam](https://github.com/utiasSTARS/pyslam) + [liegroups](https://github.com/utiasSTARS/liegroups) (optional, for running odometry/localization experiments)
 
 ## Running the demo experiment
 1. Download the ETHL dataset from [here](http://cvg.ethz.ch/research/illumination-change-robust-dslam/).
@@ -16,6 +17,12 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 3. In a terminal run `python3 -m visdom.server -port 8097` to start the visualization server.
 4. In another terminal run `python3 run_cat_experiment.py` to start training.
 5. Tune in to `localhost:8097` and watch the fun.
+
+## Running the localization experiments
+*Note: the scripts referenced here are from an older version of the repository and may need some adjustments.*
+1. Ensure the [pyslam](https://github.com/utiasSTARS/pyslam) and [liegroups] packages(https://github.com/utiasSTARS/liegroups) are installed
+2. In a terminal open the `localization` directory and run `python3 run_localization_[dataset].py`
+3. You can compute localization errors against ground truth using the `compute_localization_errors.py` script.
 
 ## Pre-trained models
 Coming soon!
