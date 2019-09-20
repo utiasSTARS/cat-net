@@ -20,7 +20,7 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 
 ## Running the localization experiments
 *Note: the scripts referenced here are from an older version of the repository and may need some adjustments.*
-1. Ensure the [pyslam](https://github.com/utiasSTARS/pyslam) and [liegroups] packages(https://github.com/utiasSTARS/liegroups) are installed
+1. Ensure the [pyslam](https://github.com/utiasSTARS/pyslam) and [liegroups(https://github.com/utiasSTARS/liegroups) packages are installed
 2. In a terminal open the `localization` directory and run `python3 run_localization_[dataset].py`
 3. You can compute localization errors against ground truth using the `compute_localization_errors.py` script.
 
