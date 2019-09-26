@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from torch.utils.data import ConcatDataset
 
@@ -67,5 +68,5 @@ for test_seq in seqs:
         for cond in conds:
             expdir = os.path.join(opts.experiment_name, cond)
             test_data = vkitti.TorchDataset(opts, seq, cond, canonical, False)
-            experiment.test(opts, model, test_data,
+            experiment.test(opts, model, test_data, expdir=expdir,
                             save_loss=True, save_images=True)
