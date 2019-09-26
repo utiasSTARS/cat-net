@@ -89,7 +89,7 @@ class CATModel:
 
     def get_errors(self):
         """Return a dictionary of the current errors"""
-        return {'loss': self.loss.data[0]}
+        return {'loss': self.loss.item()}
 
     def save_checkpoint(self, epoch, label):
         """Save the model to file"""
