@@ -4,27 +4,25 @@ from torch.autograd import Variable
 
 import os
 
-from . import config
 from . import utils
 from . import networks
 
 
 class CATModel:
-    def __init__(self):
-        self.use_cuda = config.use_cuda
+    def __init__(self, opts):
+        self.opts = opts
+
+        self.device = torch.device(self.opts.device)
 
         # Initialize network
-        self.net = networks.UNet(source_channels=config.source_channels,
-                                 output_channels=config.output_channels,
-                                 down_levels=config.down_levels,
-                                 num_init_features=config.num_init_features,
-                                 max_features=config.max_features,
-                                 drop_rate=config.drop_rate,
-                                 innermost_kernel_size=config.innermost_kernel_size,
-                                 use_cuda=self.use_cuda)
-
-        if self.use_cuda:
-            self.net.cuda()
+        self.net = (networks.UNet(source_channels=config.source_channels,
+                                  output_channels=config.output_channels,
+                                  down_levels=config.down_levels,
+                                  num_init_features=config.num_init_features,
+                                  max_features=config.max_features,
+                                  drop_rate=config.drop_rate,
+                                  innermost_kernel_size=config.innermost_kernel_size
+                                  )).to(self.device)
 
         self.net.apply(utils.initialize_weights)
 
@@ -53,48 +51,56 @@ class CATModel:
             raise ValueError(
                 "Got invalid mode '{}'. Valid options are 'train' and 'eval'.".format(mode))
 
-    def set_data(self, source, target):
+    def set_data(self, data):
         """Set the source and target tensors"""
-        if self.use_cuda:
-            self.source = source.cuda(async=True)
-            self.target = target.cuda(async=True)
-        else:
-            self.source = source
-            self.target = target
+        self.source = data['source'].to(self.device)
+        self.target = data['target'].to(self.device)
+
+    def forward(self, compute_loss=True):
+        """Evaluate the forward pass of the model"""
+        self.output = self.net.forward(self.source)
+
+        if compute_loss:
+            self.loss = self.loss_function(self.output, self.target)
 
     def optimize(self):
         """Do one step of training with the current source and target tensors"""
-        self.output = self.net.forward(Variable(self.source))
+        self.forward()
         self.optimizer.zero_grad()
-        self.loss = self.loss_function(self.output, Variable(self.target))
         self.loss.backward()
         self.optimizer.step()
 
-    def test(self):
+    def test(self, compute_loss=True):
         """Evaluate the model and test loss without optimizing"""
-        self.output = self.net.forward(Variable(self.source, volatile=True))
-        self.loss = self.loss_function(self.output,
-                                       Variable(self.target, volatile=True))
+        with torch.no_grad():
+            self.forward(compute_loss)
 
     def get_images(self):
         """Return a dictionary of the current source/output/target images"""
-        return {'source': utils.image_from_tensor(self.source[0]),
-                'output': utils.image_from_tensor(self.output.data[0]),
-                'target': utils.image_from_tensor(self.target[0])}
+        return {'source': utils.image_from_tensor(self.source[0].detach(),
+                                                  self.opts.image_mean,
+                                                  self.opts.image_std),
+                'output': utils.image_from_tensor(self.output[0].detach(),
+                                                  self.opts.image_mean,
+                                                  self.opts.image_std),
+                'target': utils.image_from_tensor(self.target[0].detach(),
+                                                  self.opts.image_mean,
+                                                  self.opts.image_std)}
 
     def get_errors(self):
         """Return a dictionary of the current errors"""
         return {'loss': self.loss.data[0]}
 
-    def save_checkpoint(self, label):
+    def save_checkpoint(self, epoch, label):
         """Save the model to file"""
         model_dir = os.path.join(
-            config.results_dir, config.experiment_name, 'checkpoints')
+            self.opts.results_dir, self.opts.experiment_name, 'checkpoints')
         os.makedirs(model_dir, exist_ok=True)
         model_file = os.path.join(model_dir, '{}_net.pth.tar'.format(label))
 
-        model_dict = {'net_state_dict': self.net.state_dict(),
-                      'use_cuda': self.use_cuda}
+        model_dict = {'epoch': epoch,
+                      'label': label,
+                      'net_state_dict': self.net.state_dict()}
 
         print("Saving model to {}".format(model_file))
         torch.save(model_dict, model_file)
@@ -102,14 +108,13 @@ class CATModel:
     def load_checkpoint(self, label):
         """Load a model from file"""
         model_dir = os.path.join(
-            config.results_dir, config.experiment_name, 'checkpoints')
+            self.opts.results_dir, self.opts.experiment_name, 'checkpoints')
         model_file = os.path.join(model_dir, '{}_net.pth.tar'.format(label))
 
         print("Loading model from {}".format(model_file))
-        model_dict = torch.load(model_file)
-
-        self.use_cuda = model_dict['use_cuda']
-        if self.use_cuda:
-            self.net.cuda()
+        model_dict = torch.load(model_file, map_location=self.device)
+        self.net.to(self.device)
 
         self.net.load_state_dict(model_dict['net_state_dict'])
+
+        return model_dict['epoch']

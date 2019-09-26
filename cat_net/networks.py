@@ -7,11 +7,8 @@ class UNet(nn.Module):
 
     def __init__(self, source_channels, output_channels, down_levels,
                  num_init_features=64, max_features=512, drop_rate=0,
-                 innermost_kernel_size=None,
-                 use_cuda=False):
+                 innermost_kernel_size=None):
         super().__init__()
-
-        self.use_cuda = use_cuda
 
         # Initial convolution
         self.model = nn.Sequential()
@@ -43,9 +40,6 @@ class UNet(nn.Module):
                                                  kernel_size=4, stride=2, padding=1, output_padding=0,
                                                  bias=True))
         self.model.add_module('tanh', nn.Tanh())
-
-        if self.use_cuda:
-            self.model = nn.DataParallel(self.model)
 
     def forward(self, x):
         return self.model(x)

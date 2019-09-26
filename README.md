@@ -6,9 +6,11 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 
 ## Dependencies
 - numpy
-- pytorch + torchvision (0.3.0)
-- PIL
-- visdom
+- matpotlib
+- pytorch + torchvision (1.2)
+- Pillow
+- progress (for progress bars in train/val/test loops)
+- tensorboard + tensorboardX (for visualization)
 - [pyslam](https://github.com/utiasSTARS/pyslam) + [liegroups](https://github.com/utiasSTARS/liegroups) (optional, for running odometry/localization experiments)
 
 ## Running the demo experiment

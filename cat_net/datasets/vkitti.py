@@ -8,8 +8,7 @@ import numpy as np
 from collections import namedtuple
 from PIL import Image
 
-from .. import config
-from .. import custom_transforms
+from .. import transforms as custom_transforms
 
 CameraIntrinsics = namedtuple('CameraIntrinsics', 'fu, fv, cu, cv')
 intrinsics_full = CameraIntrinsics(725.0, 725.0, 620.5, 187.0)
@@ -60,9 +59,11 @@ class Dataset:
         return self._load_image(self.depth_files[idx],
                                 mode='F', dtype=np.float, factor=100.)
 
-    def _load_image(self, impath, mode='RGB', dtype=np.float, factor=1):
+    def _load_image(self, impath, size=None, mode='RGB', dtype=np.float, factor=1):
         """Load image from file."""
         im = Image.open(impath).convert(mode)
+        if size:
+            im = im.resize(size, resample=Image.BILINEAR)
         return (np.array(im) / factor).astype(dtype)
 
     def _load_timestamps_and_poses(self):
@@ -94,10 +95,13 @@ class Dataset:
 
 
 class TorchDataset(torch.utils.data.Dataset):
-    def __init__(self, sequence, source_condition, target_condition, **kwargs):
-        self.source = Dataset(config.data_dir, sequence,
+    def __init__(self, opts, sequence, source_condition, target_condition, random_crop, **kwargs):
+        self.opts = opts
+        self.random_crop = random_crop
+
+        self.source = Dataset(self.opts.data_dir, sequence,
                               source_condition, **kwargs)
-        self.target = Dataset(config.data_dir, sequence,
+        self.target = Dataset(self.opts.data_dir, sequence,
                               target_condition, **kwargs)
 
     def __len__(self):
@@ -108,15 +112,18 @@ class TorchDataset(torch.utils.data.Dataset):
         target = Image.fromarray(self.target.get_rgb(idx))
 
         transform = transforms.Compose([
-            transforms.Resize(min(config.image_load_size)),
-            transforms.CenterCrop(config.image_load_size),
+            transforms.Resize(min(self.opts.image_load_size)),
+            transforms.CenterCrop(self.opts.image_load_size),
             custom_transforms.StatefulRandomCrop(
-                config.image_final_size) if config.random_crop else transforms.Resize(config.image_final_size),
+                self.opts.image_final_size) if self.opts.random_crop else transforms.Resize(self.opts.image_final_size),
             transforms.ToTensor(),
-            transforms.Normalize(config.image_mean, config.image_std)
+            transforms.Normalize(self.opts.image_mean, self.opts.image_std)
         ])
 
         source = transform(source)
         target = transform(target)
 
-        return source, target
+        data = {'source': source,
+                'target': target}
+
+        return data

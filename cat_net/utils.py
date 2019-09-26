@@ -6,9 +6,7 @@ import torch
 from torch import nn
 from torchvision import transforms
 
-from . import custom_transforms
-
-from . import config
+from . import transforms as custom_transforms
 
 
 def print_network(net):
@@ -32,13 +30,23 @@ def initialize_weights(module):
             nn.init.constant(module.bias, 0.)
 
 
-def image_from_tensor(tensor):
-    """Scales a CxHxW tensor with values in the range [-1, 1] to [0, 255]"""
-    image = tensor.cpu()
-    image = 0.5 * image + 0.5  # [-1, 1] --> [0, 1]
-    image = transforms.ToPILImage()(image)  # [0, 1] --> [0, 255]
+def image_from_tensor(tensor, image_mean=0., image_std=1., size=None):
+    tensor = tensor.cpu()
 
-    return image
+    if tensor.size(0) == 1:
+        # need to make a copy here for unnormalization to work right
+        tensor = tensor.repeat(3, 1, 1)
+
+    tf_list = [custom_transforms.UnNormalize(image_mean, image_std),
+               custom_transforms.Clamp(0, 1),
+               transforms.ToPILImage()]  # multiplication by 255 happens here
+
+    if size is not None:
+        tf_list.append(transforms.Resize(size, interpolation=Image.NEAREST))
+
+    transform = transforms.Compose(tf_list)
+
+    return transform(tensor)
 
 
 def concatenate_dicts(*dicts):
