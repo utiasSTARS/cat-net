@@ -15,13 +15,13 @@ class CATModel:
         self.device = torch.device(self.opts.device)
 
         # Initialize network
-        self.net = (networks.UNet(source_channels=config.source_channels,
-                                  output_channels=config.output_channels,
-                                  down_levels=config.down_levels,
-                                  num_init_features=config.num_init_features,
-                                  max_features=config.max_features,
-                                  drop_rate=config.drop_rate,
-                                  innermost_kernel_size=config.innermost_kernel_size
+        self.net = (networks.UNet(source_channels=self.opts.source_channels,
+                                  output_channels=self.opts.output_channels,
+                                  down_levels=self.opts.down_levels,
+                                  num_init_features=self.opts.num_init_features,
+                                  max_features=self.opts.max_features,
+                                  drop_rate=self.opts.drop_rate,
+                                  innermost_kernel_size=self.opts.innermost_kernel_size
                                   )).to(self.device)
 
         self.net.apply(utils.initialize_weights)
@@ -39,7 +39,7 @@ class CATModel:
 
         # Set optimizer
         self.optimizer = torch.optim.Adam(self.net.parameters(),
-                                          lr=config.lr)
+                                          lr=self.opts.lr)
 
     def set_mode(self, mode):
         """Set the network to train/eval mode. Affects dropout and batchnorm."""
