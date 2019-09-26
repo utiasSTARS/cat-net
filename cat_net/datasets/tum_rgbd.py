@@ -116,7 +116,7 @@ class TorchDataset(torch.utils.data.Dataset):
             transforms.Resize(min(self.opts.image_load_size)),
             transforms.CenterCrop(self.opts.image_load_size),
             custom_transforms.StatefulRandomCrop(
-                self.opts.image_final_size) if self.opts.random_crop else transforms.Resize(self.opts.image_final_size),
+                self.opts.image_final_size) if self.random_crop else transforms.Resize(self.opts.image_final_size),
             transforms.ToTensor(),
             transforms.Normalize(self.opts.image_mean, self.opts.image_std)
         ])
