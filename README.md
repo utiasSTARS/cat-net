@@ -13,21 +13,22 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 - tensorboard + tensorboardX (for visualization)
 - [pyslam](https://github.com/utiasSTARS/pyslam) + [liegroups](https://github.com/utiasSTARS/liegroups) (optional, for running odometry/localization experiments)
 
-## Running the demo experiment
-1. Download the ETHL dataset from [here](http://cvg.ethz.ch/research/illumination-change-robust-dslam/).
-2. Update `run_cat_experiment.py` to point to the appropriate local paths.
-3. In a terminal run `python3 -m visdom.server -port 8097` to start the visualization server.
-4. In another terminal run `python3 run_cat_experiment.py` to start training.
-5. Tune in to `localhost:8097` and watch the fun.
+## Training the CAT
+1. Download the ETHL dataset from [here](http://cvg.ethz.ch/research/illumination-change-robust-dslam/) 
+    1. Rename `ethl1/2` to `ethl1/2_static`.
+    2. Update the local paths in `tools/make_ethl_real_sync.py` and run `python3 tools/make_ethl_real_sync.py` to generate a synchronized copy of the `real` sequences.
+2. Update the local paths in `run_cat_ethl.py` and run `python3 run_cat_ethl.py` to start training.
+3. In another terminal run `tensorboard --port [port] --logdir [path]` to start the visualization server, where `[port]` should be replaced by a numeric value (e.g., 60006) and `[path]` should be replaced by your local results directory.
+4. Tune in to `localhost:[port]` and watch the action.
 
 ## Running the localization experiments
-*Note: the scripts referenced here are from an older version of the repository and may need some adjustments.*
-1. Ensure the [pyslam](https://github.com/utiasSTARS/pyslam) and [liegroups](https://github.com/utiasSTARS/liegroups) packages are installed
-2. In a terminal open the `localization` directory and run `python3 run_localization_[dataset].py`
+1. Ensure the [pyslam](https://github.com/utiasSTARS/pyslam) and [liegroups](https://github.com/utiasSTARS/liegroups) packages are installed.
+2. Update the local paths in `make_localization_data.py` and run `python3 make_localization_data.py [dataset]` to compile the model outputs into a `localization_data` directory.
+3. Update the local paths in `run_localization_[dataset].py` and run `python3 run_localization_[dataset].py`
 3. You can compute localization errors against ground truth using the `compute_localization_errors.py` script.
 
-## Pre-trained models
-Coming soon!
+<!-- ## Pre-trained models
+Coming soon! -->
 
 ## Citation
 If you use this code in your research, please cite:

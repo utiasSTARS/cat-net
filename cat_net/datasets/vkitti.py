@@ -25,8 +25,12 @@ class Dataset:
         self.condition = condition
         self.frames = kwargs.get('frames', None)
         self.rgb_dir = kwargs.get('rgb_dir', 'vkitti_1.3.1_rgb')
-        self.depth_dir = kwargs.get('depth_dir', 'vkitti_1.3.1_depth')
+        self.depth_dir = kwargs.get('depth_dir', 'vkitti_1.3.1_depthgt')
         self.gt_dir = kwargs.get('gt_dir', 'vkitti_1.3.1_extrinsicsgt')
+        self.pose_file = kwargs.get('pose_file',
+                                    os.path.join(self.base_path, self.gt_dir,
+                                                 '{}_{}.txt'.format(
+                                                     self.sequence, self.condition)))
 
         self._load_timestamps_and_poses()
 
@@ -46,17 +50,17 @@ class Dataset:
     def __len__(self):
         return self.num_frames
 
-    def get_rgb(self, idx):
+    def get_rgb(self, idx, size=None):
         """Load RGB image from file."""
-        return self._load_image(self.rgb_files[idx], mode='RGB', dtype=np.uint8)
+        return self._load_image(self.rgb_files[idx], size, mode='RGB', dtype=np.uint8)
 
-    def get_gray(self, idx):
+    def get_gray(self, idx, size=None):
         """Load grayscale image from file."""
-        return self._load_image(self.rgb_files[idx], mode='L', dtype=np.uint8)
+        return self._load_image(self.rgb_files[idx], size, mode='L', dtype=np.uint8)
 
-    def get_depth(self, idx):
+    def get_depth(self, idx, size=None):
         """Load depth image from file."""
-        return self._load_image(self.depth_files[idx],
+        return self._load_image(self.depth_files[idx], size,
                                 mode='F', dtype=np.float, factor=100.)
 
     def _load_image(self, impath, size=None, mode='RGB', dtype=np.float, factor=1):
@@ -68,15 +72,11 @@ class Dataset:
 
     def _load_timestamps_and_poses(self):
         """Load ground truth poses (T_w_cam) and timestamps from file."""
-        pose_file = os.path.join(self.base_path, self.gt_dir,
-                                 '{}_{}.txt'.format(
-                                     self.sequence, self.condition))
-
         self.timestamps = []
         self.poses = []
 
         # Read and parse the poses
-        with open(pose_file, 'r') as f:
+        with open(self.pose_file, 'r') as f:
             for line in f.readlines():
                 line = line.split()
                 if line[0] == 'frame':  # this is the header

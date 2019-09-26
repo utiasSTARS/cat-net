@@ -35,6 +35,8 @@ class Dataset:
         self.frames = kwargs.get('frames', None)
         self.rgb_dir = kwargs.get('rgb_dir', 'rgb')
         self.depth_dir = kwargs.get('depth_dir', 'depth')
+        self.pose_file = kwargs.get('pose_file', os.path.join(
+            self.data_path, 'groundtruth.txt'))
 
         self._load_timestamps_and_poses()
 
@@ -52,33 +54,33 @@ class Dataset:
     def __len__(self):
         return self.num_frames
 
-    def get_rgb(self, idx):
+    def get_rgb(self, idx, size=None):
         """Load RGB image from file."""
-        return self._load_image(self.rgb_files[idx], mode='RGB', dtype=np.uint8)
+        return self._load_image(self.rgb_files[idx], size, mode='RGB', dtype=np.uint8)
 
-    def get_gray(self, idx):
+    def get_gray(self, idx, size=None):
         """Load grayscale image from file."""
-        return self._load_image(self.rgb_files[idx], mode='L', dtype=np.uint8)
+        return self._load_image(self.rgb_files[idx], size, mode='L', dtype=np.uint8)
 
-    def get_depth(self, idx):
+    def get_depth(self, idx, size=None):
         """Load depth image from file."""
-        return self._load_image(self.depth_files[idx],
+        return self._load_image(self.depth_files[idx], size,
                                 mode='F', dtype=np.float, factor=5000)
 
-    def _load_image(self, impath, mode='RGB', dtype=np.float, factor=1):
+    def _load_image(self, impath, size=None, mode='RGB', dtype=np.float, factor=1):
         """Load image from file."""
         im = Image.open(impath).convert(mode)
+        if size:
+            im = im.resize(size, resample=Image.BILINEAR)
         return (np.array(im) / factor).astype(dtype)
 
     def _load_timestamps_and_poses(self):
         """Load ground truth poses (T_w_cam) and timestamps from file."""
-        pose_file = os.path.join(self.data_path, 'groundtruth.txt')
-
         self.timestamps = []
         self.poses = []
 
         # Read and parse the poses
-        with open(pose_file, 'r') as f:
+        with open(self.pose_file, 'r') as f:
             for line in f.readlines():
                 line = line.split()
                 if line[0] is '#':  # this is a comment

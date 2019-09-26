@@ -28,7 +28,7 @@ opts.innermost_kernel_size = (3, 4)
 ### SET TRAINING, VALIDATION AND TEST SETS ###
 syn_seqs = ['ethl1', 'ethl2']
 syn_conds = ['static', 'global', 'local', 'loc_glo', 'flash']
-real_seqs = ['real']
+real_seqs = ['real_sync']
 real_conds = ['global', 'local', 'flash']
 canonical = syn_conds[0]
 
@@ -43,7 +43,7 @@ for test_seq in syn_seqs:
     for seq in train_seqs:
         for cond in syn_conds:
             print('Train {}: {} --> {}'.format(seq, cond, canonical))
-            data = vkitti.TorchDataset(
+            data = tum_rgbd.TorchDataset(
                 opts, seq, cond, canonical, opts.random_crop)
             train_data.append(data)
     train_data = ConcatDataset(train_data)
@@ -52,7 +52,7 @@ for test_seq in syn_seqs:
     for seq in val_seqs:
         for cond in val_conds:
             print('Val {}: {} --> {}'.format(seq, cond, canonical))
-            data = vkitti.TorchDataset(
+            data = tum_rgbd.TorchDataset(
                 opts, seq, cond, canonical, False)
             val_data.append(data)
     val_data = ConcatDataset(val_data)
@@ -69,8 +69,10 @@ for test_seq in syn_seqs:
 
     if args.stage == 'test' or args.stage == 'both':
         for cond in syn_conds:
+            print('Test {}: {} --> {}'.format(test_seq, cond, canonical))
             expdir = os.path.join(opts.experiment_name, '{}-test'.format(cond))
-            test_data = vkitti.TorchDataset(opts, seq, cond, canonical, False)
+            test_data = tum_rgbd.TorchDataset(
+                opts, test_seq, cond, canonical, False)
             experiment.test(opts, model, test_data, expdir=expdir,
                             save_loss=True, save_images=True)
 
@@ -81,20 +83,20 @@ for test_seq in real_seqs:
     val_conds = [syn_conds[1]]
 
     train_data = []
-    for seq in train_seqs:
+    for train_seq in train_seqs:
         for cond in syn_conds:
-            print('Train {}: {} --> {}'.format(seq, cond, canonical))
-            data = vkitti.TorchDataset(
-                opts, seq, cond, canonical, opts.random_crop)
+            print('Train {}: {} --> {}'.format(train_seq, cond, canonical))
+            data = tum_rgbd.TorchDataset(
+                opts, train_seq, cond, canonical, opts.random_crop)
             train_data.append(data)
     train_data = ConcatDataset(train_data)
 
     val_data = []
-    for seq in val_seqs:
+    for val_seq in val_seqs:
         for cond in val_conds:
-            print('Val {}: {} --> {}'.format(seq, cond, canonical))
-            data = vkitti.TorchDataset(
-                opts, seq, cond, canonical, False)
+            print('Val {}: {} --> {}'.format(val_seq, cond, canonical))
+            data = tum_rgbd.TorchDataset(
+                opts, val_seq, cond, canonical, False)
             val_data.append(data)
     val_data = ConcatDataset(val_data)
 
@@ -110,7 +112,9 @@ for test_seq in real_seqs:
 
     if args.stage == 'test' or args.stage == 'both':
         for cond in real_conds:
+            print('Test {}: {} --> syn/{}'.format(test_seq, cond, canonical))
             expdir = os.path.join(opts.experiment_name, '{}-test'.format(cond))
-            test_data = vkitti.TorchDataset(opts, seq, cond, canonical, False)
+            test_data = tum_rgbd.TorchDataset(
+                opts, test_seq, cond, cond, False)  # cond,cond to avoid non-existent real_static
             experiment.test(opts, model, test_data, expdir=expdir,
                             save_loss=True, save_images=True)

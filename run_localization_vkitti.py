@@ -12,7 +12,7 @@ import time
 import os
 import argparse
 
-import tools.vkitti as vkitti
+from cat_net.datasets import vkitti
 
 
 def get_camera(seq_name, test_im, scale):
@@ -31,22 +31,24 @@ def get_camera(seq_name, test_im, scale):
 
 
 def do_vo_mapping(basepath, ref_seq, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
-    ref_data = vkitti.Dataset(
+    ref_data = vkitti.OldCATDataset(
         basepath, ref_seq, frames=frames, rgb_dir=rgb_dir)
 
-    test_im = next(ref_data.gray)
+    test_im = ref_data.get_gray(0)
     camera = get_camera(ref_seq, test_im, scale)
     camera.maxdepth = 200.
 
     # Ground truth
-    T_w_c_gt = ref_data.poses
+    T_w_c_gt = [SE3.from_matrix(p, normalize=True) for p in ref_data.poses]
     T_0_w = T_w_c_gt[0].inv()
 
     vo = DenseRGBDPipeline(camera, first_pose=T_0_w)
-    vo.keyframe_trans_thresh = 3.  # meters
+    # vo.keyframe_trans_thresh = 3.  # meters
+    vo.keyframe_trans_thresh = 2.  # meters
     vo.keyframe_rot_thresh = 15. * np.pi / 180.  # rad
     vo.depth_stiffness = 1. / 0.01  # 1/meters
     vo.intensity_stiffness = 1. / 0.2  # 1/ (intensity is in [0,1] )
+    # vo.intensity_stiffness = 1. / 0.1
     vo.use_motion_model_guess = True
     # vo.min_grad = 0.2
     # vo.loss = HuberLoss(5.0)
@@ -55,7 +57,10 @@ def do_vo_mapping(basepath, ref_seq, scale=1., frames=None, outfile=None, rgb_di
     vo.set_mode('map')
 
     start = time.perf_counter()
-    for c_idx, (image, depth) in enumerate(zip(ref_data.gray, ref_data.depth)):
+    for c_idx in range(len(ref_data)):
+        image = ref_data.get_gray(c_idx)
+        depth = ref_data.get_depth(c_idx)
+
         depth[depth >= camera.maxdepth] = -1.
         vo.track(image, depth)
         # vo.track(image, depth, guess=T_w_c_gt[c_idx].inv())
@@ -77,18 +82,20 @@ def do_vo_mapping(basepath, ref_seq, scale=1., frames=None, outfile=None, rgb_di
 
 
 def do_tracking(basepath, track_seq, vo, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
-    track_data = vkitti.Dataset(
+    track_data = vkitti.OldCATDataset(
         basepath, track_seq, frames=frames, rgb_dir=rgb_dir)
 
     # Ground truth
-    T_w_c_gt = track_data.poses
+    T_w_c_gt = [SE3.from_matrix(p, normalize=True) for p in track_data.poses]
     T_0_w = T_w_c_gt[0].inv()
 
     print('Tracking using {}'.format(track_seq))
     vo.set_mode('track')
 
     start = time.perf_counter()
-    for c_idx, (image, depth) in enumerate(zip(track_data.gray, track_data.depth)):
+    for c_idx in range(len(track_data)):
+        image = track_data.get_gray(c_idx)
+        depth = track_data.get_depth(c_idx)
         try:
             depth[depth >= vo.camera.maxdepth] = -1.
             vo.track(image, depth)
@@ -121,20 +128,18 @@ def do_tracking(basepath, track_seq, vo, scale=1., frames=None, outfile=None, rg
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--use_cat', help='use canonical appearance transformation', action='store_true')
+        'image', help='which rgb dir', type=str, choices=['rgb', 'cat', 'grad', 'census'])
     parser.add_argument(
         '--no_vo', help='skip VO experiments', action='store_true')
     parser.add_argument(
         '--no_reloc', help='skip VO experiments', action='store_true')
     args = parser.parse_args()
 
-    if args.use_cat:
-        rgb_dir = 'rgb_cat'
-    else:
-        rgb_dir = 'rgb'
+    rgb_dir = args.image if args.image == 'rgb' else 'rgb_' + args.image
 
-    datadir = '/Users/leeclement/Desktop/image-corrector-net/virtual-kitti/localization_data'
-    outdir = '/Users/leeclement/Desktop/image-corrector-net/pyslam/virtual-kitti'
+    basedir = '/media/raid5-array/experiments/cat-net/localization_data/virtual-kitti/'
+    datadir = os.path.join(basedir, 'localization_data')
+    outdir = os.path.join(basedir, 'pyslam')
     os.makedirs(outdir, exist_ok=True)
 
     vo_seqs = ['0001_overcast', '0001_clone', '0001_morning', '0001_sunset',
@@ -152,15 +157,13 @@ def main():
     # Do VO
     if not args.no_vo:
         for seq in vo_seqs:
-            # if '0018' not in seq:
-            #     continue
-
             print('Doing VO on {}'.format(seq))
 
-            if args.use_cat:
-                outfile = os.path.join(outdir, seq + '-vo-cat.mat')
-            else:
+            if args.image == 'rgb':
                 outfile = os.path.join(outdir, seq + '-vo.mat')
+            else:
+                outfile = os.path.join(
+                    outdir, seq + '-vo-{}.mat'.format(args.image))
 
             tm, vo = do_vo_mapping(datadir, seq,
                                    outfile=outfile, rgb_dir=rgb_dir)
@@ -168,8 +171,6 @@ def main():
     # Do relocalization
     if not args.no_reloc:
         for ref_seq, track_seqs in reloc_seqs.items():
-            # if '0018' not in ref_seq:
-            #     continue
             # Don't use CAT on map imagery for relocalization experiments
             # _, vo = do_vo_mapping(datadir, ref_seq, rgb_dir='rgb')
             # Or do...
@@ -179,12 +180,12 @@ def main():
                 print('Reference sequence {} | Tracking sequence {}'.format(
                     ref_seq, track_seq))
 
-                if args.use_cat:
-                    outfile = os.path.join(
-                        outdir, ref_seq + '-' + track_seq + '-cat.mat')
-                else:
+                if args.image == 'rgb':
                     outfile = os.path.join(
                         outdir, ref_seq + '-' + track_seq + '.mat')
+                else:
+                    outfile = os.path.join(
+                        outdir, ref_seq + '-' + track_seq + '-{}.mat'.format(args.image))
 
                 tm, _ = do_tracking(datadir, track_seq, vo,
                                     outfile=outfile, rgb_dir=rgb_dir)

@@ -37,20 +37,20 @@ for test_seq in seqs:
     val_conds = [conds[0]]
 
     train_data = []
-    for seq in train_seqs:
+    for train_seq in train_seqs:
         for cond in conds:
-            print('Train {}: {} --> {}'.format(seq, cond, canonical))
+            print('Train {}: {} --> {}'.format(train_seq, cond, canonical))
             data = vkitti.TorchDataset(
-                opts, seq, cond, canonical, opts.random_crop)
+                opts, train_seq, cond, canonical, opts.random_crop)
             train_data.append(data)
     train_data = ConcatDataset(train_data)
 
     val_data = []
-    for seq in val_seqs:
+    for val_seq in val_seqs:
         for cond in val_conds:
-            print('Val {}: {} --> {}'.format(seq, cond, canonical))
+            print('Val {}: {} --> {}'.format(val_seq, cond, canonical))
             data = vkitti.TorchDataset(
-                opts, seq, cond, canonical, False)
+                opts, val_seq, cond, canonical, False)
             val_data.append(data)
     val_data = ConcatDataset(val_data)
 
@@ -66,7 +66,9 @@ for test_seq in seqs:
 
     if args.stage == 'test' or args.stage == 'both':
         for cond in conds:
+            print('Test {}: {} --> {}'.format(test_seq, cond, canonical))
             expdir = os.path.join(opts.experiment_name, '{}-test'.format(cond))
-            test_data = vkitti.TorchDataset(opts, seq, cond, canonical, False)
+            test_data = vkitti.TorchDataset(
+                opts, test_seq, cond, canonical, False)
             experiment.test(opts, model, test_data, expdir=expdir,
                             save_loss=True, save_images=True)

@@ -21,13 +21,13 @@ def initialize_weights(module):
     if classname == 'Conv2d' or classname == 'ConvTranspose2d':
         module.weight.data.normal_(0.0, 0.02)  # Isola et al. 2014
         if module.bias is not None:
-            nn.init.constant(module.bias, 0.)
+            nn.init.constant_(module.bias, 0.)
 
     elif 'Norm' in classname:
         if module.weight is not None:
             module.weight.data.normal_(1.0, 0.02)  # Isola et al. 2014
         if module.bias is not None:
-            nn.init.constant(module.bias, 0.)
+            nn.init.constant_(module.bias, 0.)
 
 
 def image_from_tensor(tensor, image_mean=0., image_std=1., size=None):

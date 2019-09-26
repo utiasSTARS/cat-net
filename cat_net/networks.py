@@ -6,23 +6,23 @@ class UNet(nn.Module):
     """Create a U-Net with skip connections."""
 
     def __init__(self, source_channels, output_channels, down_levels,
-                 num_init_features=64, max_features=512, drop_rate=0,
+                 init_features=64, max_features=512, drop_rate=0,
                  innermost_kernel_size=None):
         super().__init__()
 
         # Initial convolution
         self.model = nn.Sequential()
         self.model.add_module('conv0',
-                              nn.Conv2d(source_channels, num_init_features,
+                              nn.Conv2d(source_channels, init_features,
                                         kernel_size=4, stride=2, padding=1,
                                         bias=True))
         down_levels = down_levels - 1  # We just downsampled one level
-        total_features = num_init_features
+        total_features = init_features
 
         # Build the inner blocks recursively
         if down_levels > 0:
             submodule = SkipConnectionBlock(
-                num_input_features=num_init_features,
+                num_input_features=init_features,
                 down_levels=down_levels,
                 max_features=max_features,
                 drop_rate=drop_rate,

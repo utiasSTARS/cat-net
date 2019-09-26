@@ -18,7 +18,7 @@ class CATModel:
         self.net = (networks.UNet(source_channels=self.opts.source_channels,
                                   output_channels=self.opts.output_channels,
                                   down_levels=self.opts.down_levels,
-                                  num_init_features=self.opts.num_init_features,
+                                  init_features=self.opts.init_features,
                                   max_features=self.opts.max_features,
                                   drop_rate=self.opts.drop_rate,
                                   innermost_kernel_size=self.opts.innermost_kernel_size

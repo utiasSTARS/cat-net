@@ -1,6 +1,7 @@
 # Mine
 .DS_Store
 .vscode
+sync-to-monolith.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

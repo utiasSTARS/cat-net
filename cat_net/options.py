@@ -22,7 +22,7 @@ class Options:
         self.batch_size = 64
         self.source_channels = 3
         self.output_channels = 3
-        self.num_init_features = 64
+        self.init_features = 64
         self.max_features = 512
         self.drop_rate = 0.5
 
