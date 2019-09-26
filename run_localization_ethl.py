@@ -12,7 +12,7 @@ import time
 import os
 import argparse
 
-import tools.tum_rgbd as tum_rgbd
+from cat_net.datasets import tum_rgbd
 
 
 def get_camera(seq_name, test_im, scale):

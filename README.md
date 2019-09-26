@@ -12,6 +12,7 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 - progress (for progress bars in train/val/test loops)
 - tensorboard + tensorboardX (for visualization)
 - [pyslam](https://github.com/utiasSTARS/pyslam) + [liegroups](https://github.com/utiasSTARS/liegroups) (optional, for running odometry/localization experiments)
+- OpenCV (optional, for running odometry/localization experiments)
 
 ## Training the CAT
 1. Download the ETHL dataset from [here](http://cvg.ethz.ch/research/illumination-change-robust-dslam/) 

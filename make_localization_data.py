@@ -21,7 +21,7 @@ experiments_dir = '/media/raid5-array/experiments/cat-net/'
 
 results_dir = os.path.join(experiments_dir, args.dataset)
 localization_data_dir = os.path.join(
-    experiments_dir, 'localization_data', args.dataset)
+    experiments_dir, args.dataset, 'localization_data')
 
 os.makedirs(localization_data_dir, exist_ok=True)
 

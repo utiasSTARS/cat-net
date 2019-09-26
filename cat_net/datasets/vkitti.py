@@ -94,6 +94,34 @@ class Dataset:
             self.poses = [self.poses[i] for i in self.frames]
 
 
+class LocalizationDataset(Dataset):
+    def __init__(self, base_path, sequence, condition, **kwargs):
+        self.base_path = base_path
+        self.sequence = sequence
+        self.condition = condition
+        self.frames = kwargs.get('frames', None)
+        self.rgb_dir = kwargs.get('rgb_dir', 'rgb')
+        self.depth_dir = kwargs.get('depth_dir', 'depth')
+        self.gt_file = kwargs.get('gt_file', 'groundtruth.txt')
+
+        self.pose_file = os.path.join(
+            self.base_path, self.sequence, self.condition, self.gt_file)
+        self._load_timestamps_and_poses()
+
+        self.num_frames = len(self.timestamps)
+
+        self.rgb_files = sorted(glob.glob(
+            os.path.join(self.base_path, self.sequence,
+                         self.condition, self.rgb_dir, '*.png')))
+        self.depth_files = sorted(glob.glob(
+            os.path.join(self.base_path, self.sequence,
+                         self.condition, self.depth_dir, '*.png')))
+
+        if self.frames is not None:
+            self.rgb_files = [self.rgb_files[i] for i in self.frames]
+            self.depth_files = [self.depth_files[i] for i in self.frames]
+
+
 class TorchDataset(torch.utils.data.Dataset):
     def __init__(self, opts, sequence, source_condition, target_condition, random_crop, **kwargs):
         self.opts = opts

@@ -30,12 +30,12 @@ def get_camera(seq_name, test_im, scale):
     return RGBDCamera(cu, cv, fu, fv, width, height)
 
 
-def do_vo_mapping(basepath, ref_seq, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
-    ref_data = vkitti.OldCATDataset(
-        basepath, ref_seq, frames=frames, rgb_dir=rgb_dir)
+def do_vo_mapping(basepath, seq, ref_cond, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
+    ref_data = vkitti.LocalizationDataset(
+        basepath, seq, ref_cond, frames=frames, rgb_dir=rgb_dir)
 
     test_im = ref_data.get_gray(0)
-    camera = get_camera(ref_seq, test_im, scale)
+    camera = get_camera(seq, test_im, scale)
     camera.maxdepth = 200.
 
     # Ground truth
@@ -53,7 +53,7 @@ def do_vo_mapping(basepath, ref_seq, scale=1., frames=None, outfile=None, rgb_di
     # vo.min_grad = 0.2
     # vo.loss = HuberLoss(5.0)
 
-    print('Mapping using {}'.format(ref_seq))
+    print('Mapping using {}/{}'.format(seq, ref_cond))
     vo.set_mode('map')
 
     start = time.perf_counter()
@@ -81,15 +81,15 @@ def do_vo_mapping(basepath, ref_seq, scale=1., frames=None, outfile=None, rgb_di
     return tm, vo
 
 
-def do_tracking(basepath, track_seq, vo, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
-    track_data = vkitti.OldCATDataset(
-        basepath, track_seq, frames=frames, rgb_dir=rgb_dir)
+def do_tracking(basepath, seq, track_cond, vo, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
+    track_data = vkitti.LocalizationDataset(
+        basepath, seq, track_cond, frames=frames, rgb_dir=rgb_dir)
 
     # Ground truth
     T_w_c_gt = [SE3.from_matrix(p, normalize=True) for p in track_data.poses]
     T_0_w = T_w_c_gt[0].inv()
 
-    print('Tracking using {}'.format(track_seq))
+    print('Tracking using {}/{}'.format(seq, track_cond))
     vo.set_mode('track')
 
     start = time.perf_counter()
@@ -105,7 +105,7 @@ def do_tracking(basepath, track_seq, vo, scale=1., frames=None, outfile=None, rg
                 c_idx, len(track_data), 100. * c_idx / len(track_data), end - start), end='\r')
 
         except Exception as e:
-            print('Error on {}'.format(track_seq))
+            print('Error on {}/{}'.format(seq, track_cond))
             print(e)
             print('Image {}/{} ({:.2f} %) | {:.3f} s'.format(
                 c_idx, len(track_data), 100. * c_idx / len(track_data), end - start))
@@ -128,7 +128,7 @@ def do_tracking(basepath, track_seq, vo, scale=1., frames=None, outfile=None, rg
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'image', help='which rgb dir', type=str, choices=['rgb', 'cat', 'grad', 'census'])
+        'image', help='which rgb dir', type=str, choices=['rgb', 'cat'])
     parser.add_argument(
         '--no_vo', help='skip VO experiments', action='store_true')
     parser.add_argument(
@@ -137,58 +137,46 @@ def main():
 
     rgb_dir = args.image if args.image == 'rgb' else 'rgb_' + args.image
 
-    basedir = '/media/raid5-array/experiments/cat-net/localization_data/virtual-kitti/'
+    basedir = '/media/raid5-array/experiments/cat-net/virtual-kitti'
     datadir = os.path.join(basedir, 'localization_data')
     outdir = os.path.join(basedir, 'pyslam')
     os.makedirs(outdir, exist_ok=True)
 
-    vo_seqs = ['0001_overcast', '0001_clone', '0001_morning', '0001_sunset',
-               '0002_overcast', '0002_clone', '0002_morning', '0002_sunset',
-               '0006_overcast', '0006_clone', '0006_morning', '0006_sunset',
-               '0018_overcast', '0018_clone', '0018_morning', '0018_sunset',
-               '0020_overcast', '0020_clone', '0020_morning', '0020_sunset']
-
-    reloc_seqs = {'0001_overcast': ['0001_overcast', '0001_clone', '0001_morning', '0001_sunset'],
-                  '0002_overcast': ['0002_overcast', '0002_clone', '0002_morning', '0002_sunset'],
-                  '0006_overcast': ['0006_overcast', '0006_clone', '0006_morning', '0006_sunset'],
-                  '0018_overcast': ['0018_overcast', '0018_clone', '0018_morning', '0018_sunset'],
-                  '0020_overcast': ['0020_overcast', '0020_clone', '0020_morning', '0020_sunset']}
+    # seqs = ['0001', '0002', '0006', '0018', '0020']
+    seqs = ['0001']
+    conds = ['clone', 'morning', 'overcast', 'sunset']
+    canonical = conds[2]
 
     # Do VO
     if not args.no_vo:
-        for seq in vo_seqs:
-            print('Doing VO on {}'.format(seq))
+        for seq in seqs:
+            for cond in conds:
+                print('Doing VO on {}/{}'.format(seq, cond))
 
-            if args.image == 'rgb':
-                outfile = os.path.join(outdir, seq + '-vo.mat')
-            else:
+                seq_outdir = os.path.join(outdir, seq)
+                os.makedirs(seq_outdir, exist_ok=True)
                 outfile = os.path.join(
-                    outdir, seq + '-vo-{}.mat'.format(args.image))
+                    seq_outdir, '{}-vo-{}.mat'.format(cond, args.image))
 
-            tm, vo = do_vo_mapping(datadir, seq,
-                                   outfile=outfile, rgb_dir=rgb_dir)
+                tm, vo = do_vo_mapping(datadir, seq, cond,
+                                       outfile=outfile, rgb_dir=rgb_dir)
 
     # Do relocalization
     if not args.no_reloc:
-        for ref_seq, track_seqs in reloc_seqs.items():
-            # Don't use CAT on map imagery for relocalization experiments
-            # _, vo = do_vo_mapping(datadir, ref_seq, rgb_dir='rgb')
-            # Or do...
-            _, vo = do_vo_mapping(datadir, ref_seq, rgb_dir=rgb_dir)
+        for seq in seqs:
+            # Map in the canonical condition
+            _, vo = do_vo_mapping(datadir, seq, canonical, rgb_dir=rgb_dir)
 
-            for track_seq in track_seqs:
-                print('Reference sequence {} | Tracking sequence {}'.format(
-                    ref_seq, track_seq))
+        for cond in conds:
+            print('Seq: {} | Ref: {} | Track: {}'.format(seq, canonical, cond))
 
-                if args.image == 'rgb':
-                    outfile = os.path.join(
-                        outdir, ref_seq + '-' + track_seq + '.mat')
-                else:
-                    outfile = os.path.join(
-                        outdir, ref_seq + '-' + track_seq + '-{}.mat'.format(args.image))
+            seq_outdir = os.path.join(outdir, seq)
+            os.makedirs(seq_outdir, exist_ok=True)
+            outfile = os.path.join(
+                seq_outdir, '{}-{}-{}.mat'.format(canonical, cond, args.image))
 
-                tm, _ = do_tracking(datadir, track_seq, vo,
-                                    outfile=outfile, rgb_dir=rgb_dir)
+            tm, _ = do_tracking(datadir, seq, cond, vo,
+                                outfile=outfile, rgb_dir=rgb_dir)
 
 
 # Do the thing
