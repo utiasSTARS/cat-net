@@ -73,6 +73,6 @@ def compute_dict_avg(dict):
 def tag_dict_keys(dict, tag):
     new_dict = {}
     for key, val in dict.items():
-        new_key = tag + '_' + key
+        new_key = key + '/' + tag
         new_dict[new_key] = val
     return new_dict
