@@ -15,10 +15,10 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 - OpenCV (optional, for running odometry/localization experiments)
 
 ## Training the CAT
-1. Download the ETHL dataset from [here](http://cvg.ethz.ch/research/illumination-change-robust-dslam/) 
-    1. Rename `ethl1/2` to `ethl1/2_static`.
-    2. Update the local paths in `tools/make_ethl_real_sync.py` and run `python3 tools/make_ethl_real_sync.py` to generate a synchronized copy of the `real` sequences.
-2. Update the local paths in `run_cat_ethl.py` and run `python3 run_cat_ethl.py` to start training.
+1. Download the ETHL dataset from [here](http://cvg.ethz.ch/research/illumination-change-robust-dslam/) or the Virtual KITTI dataset from [here](https://europe.naverlabs.com/research/computer-vision/proxy-virtual-worlds/)
+    1. ETHL only: rename `ethl1/2` to `ethl1/2_static`.
+    2. ETHL only: Update the local paths in `tools/make_ethl_real_sync.py` and run `python3 tools/make_ethl_real_sync.py` to generate a synchronized copy of the `real` sequences.
+2. Update the local paths in `run_cat_ethl/vkitti.py` and run `python3 run_cat_ethl/vkitti.py` to start training.
 3. In another terminal run `tensorboard --port [port] --logdir [path]` to start the visualization server, where `[port]` should be replaced by a numeric value (e.g., 60006) and `[path]` should be replaced by your local results directory.
 4. Tune in to `localhost:[port]` and watch the action.
 
