@@ -12,10 +12,13 @@ from .. import transforms as custom_transforms
 
 CameraIntrinsics = namedtuple('CameraIntrinsics', 'fu, fv, cu, cv')
 # https://www.doc.ic.ac.uk/~ahanda/VaFRIC/codes.html
-ethl1_intrinsics = CameraIntrinsics(481.20, -480.00, 319.50, 239.50)
-ethl2_intrinsics = ethl1_intrinsics
+ethl1_intrinsics = CameraIntrinsics(481.20, -480.00, 319.50, 239.50)  # 640x480
+ethl1_intrinsics_256x192 = CameraIntrinsics(192.48, -192.00, 127.80, 95.80)
+ethl2_intrinsics = ethl1_intrinsics  # 640x480
+ethl2_intrinsics_256x192 = ethl1_intrinsics_256x192
 # http://cvg.ethz.ch/research/illumination-change-robust-dslam/
-real_intrinsics = CameraIntrinsics(538.7, 540.7, 319.2, 233.6)
+real_intrinsics = CameraIntrinsics(538.7, 540.7, 319.2, 233.6)  # 640x480
+real_intrinsics_256x192 = CameraIntrinsics(215.48, 216.28, 127.68, 93.44)
 
 
 class Dataset:
@@ -95,6 +98,36 @@ class Dataset:
         if self.frames is not None:
             self.timestamps = [self.timestamps[i] for i in self.frames]
             self.poses = [self.poses[i] for i in self.frames]
+
+
+class LocalizationDataset(Dataset):
+    def __init__(self, base_path, sequence, condition, **kwargs):
+        self.base_path = base_path
+        self.sequence = sequence
+        self.condition = condition
+        self.frames = kwargs.get('frames', None)
+        self.rgb_dir = kwargs.get('rgb_dir', 'rgb')
+        self.depth_dir = kwargs.get('depth_dir', 'depth')
+        self.gt_file = kwargs.get('gt_file', 'groundtruth.txt')
+
+        self.data_path = os.path.join(
+            self.base_path, self.sequence, self.condition)
+
+        self.pose_file = os.path.join(self.data_path, self.gt_file)
+        self._load_timestamps_and_poses()
+
+        self.num_frames = len(self.timestamps)
+
+        self.rgb_files = sorted(glob.glob(
+            os.path.join(self.base_path, self.sequence,
+                         self.condition, self.rgb_dir, '*.png')))
+        self.depth_files = sorted(glob.glob(
+            os.path.join(self.base_path, self.sequence,
+                         self.condition, self.depth_dir, '*.png')))
+
+        if self.frames is not None:
+            self.rgb_files = [self.rgb_files[i] for i in self.frames]
+            self.depth_files = [self.depth_files[i] for i in self.frames]
 
 
 class TorchDataset(torch.utils.data.Dataset):

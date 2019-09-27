@@ -6,7 +6,6 @@ from pyslam.pipelines import DenseRGBDPipeline
 from pyslam.sensors import RGBDCamera
 from pyslam.metrics import TrajectoryMetrics
 from pyslam.visualizers import TrajectoryVisualizer
-from pyslam.losses import HuberLoss
 
 import time
 import os
@@ -15,27 +14,24 @@ import argparse
 from cat_net.datasets import vkitti
 
 
-def get_camera(seq_name, test_im, scale):
+def get_camera(seq_name, test_im):
     # Create the camera
     intrinsics = vkitti.intrinsics_centrecrop_256x192
-    # intrinsics = vkitti.intrinsics_full
 
-    fu = intrinsics.fu * scale
-    fv = intrinsics.fv * scale
-    cu = intrinsics.cu * scale
-    cv = intrinsics.cv * scale
+    fu = intrinsics.fu
+    fv = intrinsics.fv
+    cu = intrinsics.cu
+    cv = intrinsics.cv
     height, width = test_im.shape
-    # height = int(height * scale)
-    # width = int(width * scale)
     return RGBDCamera(cu, cv, fu, fv, width, height)
 
 
-def do_vo_mapping(basepath, seq, ref_cond, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
+def do_vo_mapping(basepath, seq, ref_cond, frames=None, outfile=None, rgb_dir='rgb'):
     ref_data = vkitti.LocalizationDataset(
         basepath, seq, ref_cond, frames=frames, rgb_dir=rgb_dir)
 
     test_im = ref_data.get_gray(0)
-    camera = get_camera(seq, test_im, scale)
+    camera = get_camera(seq, test_im)
     camera.maxdepth = 200.
 
     # Ground truth
@@ -63,7 +59,7 @@ def do_vo_mapping(basepath, seq, ref_cond, scale=1., frames=None, outfile=None, 
 
         depth[depth >= camera.maxdepth] = -1.
         vo.track(image, depth)
-        # vo.track(image, depth, guess=T_w_c_gt[c_idx].inv())
+        # vo.track(image, depth, guess=T_w_c_gt[c_idx].inv()) # debug
         end = time.perf_counter()
         print('Image {}/{} ({:.2f} %) | {:.3f} s'.format(
             c_idx, len(ref_data), 100. * c_idx / len(ref_data), end - start), end='\r')
@@ -81,7 +77,7 @@ def do_vo_mapping(basepath, seq, ref_cond, scale=1., frames=None, outfile=None, 
     return tm, vo
 
 
-def do_tracking(basepath, seq, track_cond, vo, scale=1., frames=None, outfile=None, rgb_dir='rgb'):
+def do_tracking(basepath, seq, track_cond, vo, frames=None, outfile=None, rgb_dir='rgb'):
     track_data = vkitti.LocalizationDataset(
         basepath, seq, track_cond, frames=frames, rgb_dir=rgb_dir)
 
@@ -99,7 +95,7 @@ def do_tracking(basepath, seq, track_cond, vo, scale=1., frames=None, outfile=No
         try:
             depth[depth >= vo.camera.maxdepth] = -1.
             vo.track(image, depth)
-            # vo.track(image, depth, guess=T_w_c_gt[c_idx].inv())
+            # vo.track(image, depth, guess=T_w_c_gt[c_idx].inv()) # debug
             end = time.perf_counter()
             print('Image {}/{} ({:.2f} %) | {:.3f} s'.format(
                 c_idx, len(track_data), 100. * c_idx / len(track_data), end - start), end='\r')
@@ -142,8 +138,7 @@ def main():
     outdir = os.path.join(basedir, 'pyslam')
     os.makedirs(outdir, exist_ok=True)
 
-    # seqs = ['0001', '0002', '0006', '0018', '0020']
-    seqs = ['0001']
+    seqs = ['0001', '0002', '0006', '0018', '0020']
     conds = ['clone', 'morning', 'overcast', 'sunset']
     canonical = conds[2]
 

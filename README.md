@@ -25,8 +25,8 @@ Code to accompany our paper ["How to Train a CAT: Learning Canonical Appearance 
 ## Running the localization experiments
 1. Ensure the [pyslam](https://github.com/utiasSTARS/pyslam) and [liegroups](https://github.com/utiasSTARS/liegroups) packages are installed.
 2. Update the local paths in `make_localization_data.py` and run `python3 make_localization_data.py [dataset]` to compile the model outputs into a `localization_data` directory.
-3. Update the local paths in `run_localization_[dataset].py` and run `python3 run_localization_[dataset].py`
-3. You can compute localization errors against ground truth using the `compute_localization_errors.py` script.
+3. Update the local paths in `run_localization_[dataset].py` and run `python3 run_localization_[dataset].py [rgb,cat]` to compute VO and localization results using either the original RGB or CAT-transformed images.
+3. You can compute localization errors against ground truth using the `compute_localization_errors.py` script, which generates CSV files and several plots. Update the local paths and run `python3 compute_localization_errors.py [dataset]`.
 
 <!-- ## Pre-trained models
 Coming soon! -->
